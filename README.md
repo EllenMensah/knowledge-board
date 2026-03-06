@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Collaborative Knowledge Board — Stage 1
 
 Production-grade collaborative workspace: boards, columns, and cards with normalized state, accessibility, and performance considerations.
@@ -144,3 +145,7 @@ npm run preview  # preview production build
 - [x] Memoization and code splitting (lazy Board page)  
 - [x] Semantic HTML, aria-labels, keyboard modal, focus management  
 - [x] Clean layout and spacing (Tailwind, no template-style UI)
+=======
+# knowledge-board
+A modern knowledge and task management board built with React, TypeScript, Zustand, and Tailwind CSS. It allows users to organize ideas, tasks, and notes in a clean interface. This is a Talenvo stage 1 project.
+>>>>>>> 2ef3c30fc8c0dee990790f272827e3a55a54884f
