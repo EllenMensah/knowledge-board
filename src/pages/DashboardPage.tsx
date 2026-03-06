@@ -39,7 +39,7 @@ export default function DashboardPage() {
   }, [])
 
   return (
-    <main className="min-h-screen bg-slate-50" role="main" aria-label="Workspace dashboard">
+    <main className="min-h-screen bg-[#CDCDCD]" role="main" aria-label="Workspace dashboard">
       <div className="mx-auto max-w-5xl px-6 py-10">
         <header className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
