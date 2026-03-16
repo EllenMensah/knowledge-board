@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import DashboardPage from "../pages/DashboardPage"
+import NotFoundPage from "../pages/NotFoundPage"
 
 const BoardPage = lazy(() => import("../pages/BoardPage"))
 
@@ -25,6 +26,7 @@ const Router = () => {
             </Suspense>
           }
         />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   )

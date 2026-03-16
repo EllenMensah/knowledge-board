@@ -34,7 +34,7 @@ export default function BoardPage() {
 
   if (!board) {
     return (
-      <main className="min-h-screen bg-slate-50 p-8">
+      <main className="min-h-screen bg-[#CDCDCD] p-8">
         <p className="text-slate-600">Board not found.</p>
         <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline">Back to dashboard</Link>
       </main>
