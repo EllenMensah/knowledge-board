@@ -1,10 +1,11 @@
 import { useCallback, useState } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { useShallow } from "zustand/react/shallow"
 import { useWorkspaceStore, selectBoardById, selectColumnsForBoard } from "../store"
 import BoardColumn from "../components/board/BoardColumn"
 import Button from "../components/ui/Button"
 import Input from "../components/ui/Input"
+import AppNavbar from "../components/layout/AppNavbar"
 
 export default function BoardPage() {
   const { id: boardId } = useParams<{ id: string }>()
@@ -25,43 +26,29 @@ export default function BoardPage() {
 
   if (!boardId) {
     return (
-      <main className="min-h-screen bg-[#CDCDCD] p-8">
-        <p className="text-slate-600">Missing board ID.</p>
-        <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline">Back to dashboard</Link>
+      <main className="min-h-screen bg-[#CDCDCD]">
+        <AppNavbar subtitle="Board not found" />
+        <div className="mx-auto max-w-[1800px] px-6 py-8">
+          <p className="text-slate-600">Missing board ID.</p>
+        </div>
       </main>
     )
   }
 
   if (!board) {
     return (
-      <main className="min-h-screen bg-[#CDCDCD] p-8">
-        <p className="text-slate-600">Board not found.</p>
-        <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline">Back to dashboard</Link>
+      <main className="min-h-screen bg-[#CDCDCD]">
+        <AppNavbar subtitle="Board not found" />
+        <div className="mx-auto max-w-[1800px] px-6 py-8">
+          <p className="text-slate-600">Board not found.</p>
+        </div>
       </main>
     )
   }
 
   return (
     <main className="min-h-screen bg-slate-100" role="main" aria-label={`Board: ${board.title}`}>
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-[1800px] items-center justify-between gap-4 px-6 py-4">
-          <div className="flex min-w-0 items-center gap-4">
-            <Link
-              to="/"
-              className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="Back to workspace dashboard"
-            >
-              <span aria-hidden="true">←</span>
-            </Link>
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-bold text-slate-900">{board.title}</h1>
-              {board.description && (
-                <p className="truncate text-sm text-slate-500">{board.description}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppNavbar title={board.title} subtitle={board.description || "Board"} />
 
       <div className="mx-auto max-w-[1800px] px-6 py-6">
         <div className="flex gap-4 overflow-x-auto pb-4" role="list">

@@ -5,15 +5,26 @@ import BoardItem from "../components/dashboard/BoardItem"
 import Input from "../components/ui/Input"
 import Button from "../components/ui/Button"
 import Modal from "../components/ui/Modal"
+import AppNavbar from "../components/layout/AppNavbar"
 
 export default function DashboardPage() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [search, setSearch] = useState("")
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   const boards = useWorkspaceStore(useShallow(selectBoardsList))
   const createBoard = useWorkspaceStore((s) => s.createBoard)
   const deleteBoard = useWorkspaceStore((s) => s.deleteBoard)
+
+  const filteredBoards = boards.filter((board) => {
+    const q = search.trim().toLowerCase()
+    if (!q) return true
+    return (
+      board.title.toLowerCase().includes(q) ||
+      board.description.toLowerCase().includes(q)
+    )
+  })
 
   const handleCreateBoard = useCallback(() => {
     const t = title.trim()
@@ -40,15 +51,15 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[#CDCDCD]" role="main" aria-label="Workspace dashboard">
-      <div className="mx-auto max-w-5xl px-6 py-10">
-        <header className="mb-10">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Workspace Boards
-          </h1>
-          <p className="mt-1 text-slate-600">
-            Create and manage your collaborative knowledge boards.
-          </p>
-        </header>
+      <AppNavbar
+        subtitle="Workspace dashboard"
+        showSearch
+        searchPlaceholder="Search boards…"
+        searchValue={search}
+        onSearchChange={setSearch}
+      />
+
+      <div className="mx-auto max-w-5xl px-6 py-8">
 
         <section aria-labelledby="create-board-heading" className="mb-10">
           <h2 id="create-board-heading" className="sr-only">
@@ -89,13 +100,15 @@ export default function DashboardPage() {
           <h2 id="boards-list-heading" className="mb-4 text-xl font-semibold text-slate-800">
             Your boards
           </h2>
-          {boards.length === 0 ? (
+          {filteredBoards.length === 0 ? (
             <p className="rounded-xl bg-white py-12 text-center text-slate-500 shadow-sm ring-1 ring-slate-200/60">
-              No boards yet. Create your first board above.
+              {boards.length === 0
+                ? "No boards yet. Create your first board above."
+                : "No boards match your search."}
             </p>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="list">
-              {boards.map((board) => (
+              {filteredBoards.map((board) => (
                 <li key={board.id}>
                   <BoardItem
                     {...board}
