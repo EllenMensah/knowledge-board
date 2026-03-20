@@ -11,25 +11,58 @@ export default function DashboardPage() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [search, setSearch] = useState("")
+  const [filter, setFilter] = useState<"az" | "za" | "newest" | "oldest">("newest")
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   const boards = useWorkspaceStore(useShallow(selectBoardsList))
   const createBoard = useWorkspaceStore((s) => s.createBoard)
   const deleteBoard = useWorkspaceStore((s) => s.deleteBoard)
 
-  const filteredBoards = boards.filter((board) => {
-    const q = search.trim().toLowerCase()
-    if (!q) return true
-    return (
-      board.title.toLowerCase().includes(q) ||
-      board.description.toLowerCase().includes(q)
-    )
-  })
+  // ✅ FILTER + SEARCH + SORT
+  const filteredBoards = boards
+    .filter((board) => {
+      const q = search.trim().toLowerCase()
+      if (!q) return true
+
+      return (
+        board.title.toLowerCase().includes(q) ||
+        board.description.toLowerCase().includes(q)
+      )
+    })
+    .sort((a, b) => {
+      switch (filter) {
+        case "az":
+          return a.title.localeCompare(b.title)
+
+        case "za":
+          return b.title.localeCompare(a.title)
+
+        case "newest":
+          return (
+            new Date(b.createdAt).getTime() -
+            new Date(a.createdAt).getTime()
+          )
+
+        case "oldest":
+          return (
+            new Date(a.createdAt).getTime() -
+            new Date(b.createdAt).getTime()
+          )
+
+        default:
+          return 0
+      }
+    })
 
   const handleCreateBoard = useCallback(() => {
     const t = title.trim()
     if (!t) return
-    createBoard({ title: t, description: description.trim() })
+
+    createBoard({
+      title: t,
+      description: description.trim(),
+    })
+
     setTitle("")
     setDescription("")
   }, [title, description, createBoard])
@@ -50,7 +83,11 @@ export default function DashboardPage() {
   }, [])
 
   return (
-    <main className="min-h-screen bg-[#CDCDCD]" role="main" aria-label="Workspace dashboard">
+    <main
+      className="min-h-screen bg-[#CDCDCD]"
+      role="main"
+      aria-label="Workspace dashboard"
+    >
       <AppNavbar
         subtitle="Workspace dashboard"
         showSearch
@@ -61,45 +98,63 @@ export default function DashboardPage() {
 
       <div className="mx-auto max-w-5xl px-6 py-8">
 
+        {/* ✅ CREATE BOARD */}
         <section aria-labelledby="create-board-heading" className="mb-10">
           <h2 id="create-board-heading" className="sr-only">
             Create new board
           </h2>
+
           <div className="flex flex-wrap items-end gap-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
             <div className="min-w-0 flex-1 basis-48">
-              <label htmlFor="board-title" className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-slate-700">
                 Board title
               </label>
               <Input
-                id="board-title"
                 placeholder="e.g. Product backlog"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                aria-label="Board title"
               />
             </div>
+
             <div className="min-w-0 flex-1 basis-48">
-              <label htmlFor="board-description" className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-slate-700">
                 Description
               </label>
               <Input
-                id="board-description"
                 placeholder="Short description (optional)"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                aria-label="Board description"
               />
             </div>
-            <Button onClick={handleCreateBoard} aria-label="Create board">
+
+            <Button onClick={handleCreateBoard}>
               Create Board
             </Button>
           </div>
         </section>
 
-        <section aria-labelledby="boards-list-heading">
-          <h2 id="boards-list-heading" className="mb-4 text-xl font-semibold text-slate-800">
+        {/* ✅ HEADER + FILTER */}
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-slate-800">
             Your boards
           </h2>
+
+          <select
+            value={filter}
+            onChange={(e) =>
+              setFilter(e.target.value as "az" | "za" | "newest" | "oldest")
+            }
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="az">A → Z</option>
+            <option value="za">Z → A</option>
+          </select>
+        </div>
+
+        {/* ✅ BOARD LIST */}
+        <section>
           {filteredBoards.length === 0 ? (
             <p className="rounded-xl bg-white py-12 text-center text-slate-500 shadow-sm ring-1 ring-slate-200/60">
               {boards.length === 0
@@ -107,7 +162,7 @@ export default function DashboardPage() {
                 : "No boards match your search."}
             </p>
           ) : (
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="list">
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredBoards.map((board) => (
                 <li key={board.id}>
                   <BoardItem
@@ -121,22 +176,23 @@ export default function DashboardPage() {
         </section>
       </div>
 
+      {/* ✅ DELETE MODAL */}
       <Modal
         isOpen={deleteConfirmId !== null}
         onClose={handleCancelDelete}
         title="Delete board?"
         titleId="delete-board-modal-title"
       >
-        <p id="delete-board-description" className="mt-2 text-slate-600">
-          This will permanently delete the board and all its columns and cards. This action cannot be undone.
+        <p className="mt-2 text-slate-600">
+          This will permanently delete the board and all its columns and cards.
         </p>
+
         <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" onClick={handleCancelDelete}>Cancel</Button>
+          <Button onClick={handleCancelDelete}>Cancel</Button>
+
           <button
-            type="button"
             onClick={handleConfirmDelete}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            aria-describedby="delete-board-description"
+            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
           >
             Delete board
           </button>
