@@ -1,7 +1,8 @@
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import { useShallow } from "zustand/react/shallow"
 import { useWorkspaceStore, selectBoardById, selectColumnsForBoard } from "../store"
+import { useCommandHistory } from "../store/historyStore"
 import BoardColumn from "../components/board/BoardColumn"
 import Button from "../components/ui/Button"
 import Input from "../components/ui/Input"
@@ -15,6 +16,21 @@ export default function BoardPage() {
   const board = useWorkspaceStore((s) => (boardId ? selectBoardById(s, boardId) : undefined))
   const columns = useWorkspaceStore(useShallow((s) => (boardId ? selectColumnsForBoard(s, boardId) : [])))
   const createColumn = useWorkspaceStore((s) => s.createColumn)
+  const undo = useWorkspaceStore((s) => s.undo)
+  const redo = useWorkspaceStore((s) => s.redo)
+  const canUndo = useCommandHistory((s) => s.past.length > 0)
+  const canRedo = useCommandHistory((s) => s.future.length > 0)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key !== "z") return
+      e.preventDefault()
+      if (e.shiftKey) redo()
+      else undo()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [undo, redo])
 
   const handleAddColumn = useCallback(() => {
     const title = newColumnTitle.trim()
@@ -51,6 +67,28 @@ export default function BoardPage() {
       <AppNavbar title={board.title} subtitle={board.description || "Board"} />
 
       <div className="mx-auto max-w-[1800px] px-6 py-6">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Card history</span>
+          <button
+            type="button"
+            onClick={() => undo()}
+            disabled={!canUndo}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Undo last card action"
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            onClick={() => redo()}
+            disabled={!canRedo}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Redo card action"
+          >
+            Redo
+          </button>
+          <span className="text-xs text-slate-400">Ctrl+Z / Ctrl+Shift+Z</span>
+        </div>
         <div className="flex gap-4 overflow-x-auto pb-4" role="list">
           {columns.map((column) => (
             <BoardColumn key={column.id} columnId={column.id} />

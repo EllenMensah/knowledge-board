@@ -1,4 +1,4 @@
-import { memo, useState, useCallback } from "react"
+import { memo, useState, useCallback, useRef } from "react"
 import type { WorkspaceStore } from "../../store"
 import { useWorkspaceStore, selectCardById } from "../../store"
 import Markdown from "../ui/Markdown"
@@ -6,6 +6,7 @@ import Modal from "../ui/Modal"
 import Input from "../ui/Input"
 import Textarea from "../ui/Textarea"
 import Button from "../ui/Button"
+import CardComments from "./CardComments"
 
 type BoardCardProps = {
   cardId: string
@@ -24,7 +25,14 @@ function BoardCardInner({ cardId }: BoardCardProps) {
   const [editTagInput, setEditTagInput] = useState("")
   const [editDueDate, setEditDueDate] = useState("")
 
+  // Prevent click-to-open-modal from firing right after a drag ends
+  const wasDragging = useRef(false)
+
   const openModal = useCallback(() => {
+    if (wasDragging.current) {
+      wasDragging.current = false
+      return
+    }
     if (!card) return
     setEditTitle(card.title)
     setEditDescription(card.description)
@@ -67,6 +75,25 @@ function BoardCardInner({ cardId }: BoardCardProps) {
     setEditTags((prev) => prev.filter((t) => t !== tag))
   }, [])
 
+  /* ─── Drag handlers ─── */
+  const handleDragStart = useCallback(
+    (e: React.DragEvent<HTMLButtonElement>) => {
+      if (!card) return
+      e.dataTransfer.effectAllowed = "move"
+      e.dataTransfer.setData("text/plain", JSON.stringify({ cardId: card.id, columnId: card.columnId }))
+      // Add drag styling after a tick so the browser captures the element first
+      requestAnimationFrame(() => {
+        ;(e.target as HTMLElement).classList.add("dragging")
+      })
+    },
+    [card]
+  )
+
+  const handleDragEnd = useCallback((e: React.DragEvent<HTMLButtonElement>) => {
+    ;(e.target as HTMLElement).classList.remove("dragging")
+    wasDragging.current = true
+  }, [])
+
   if (!card) return null
 
   const dueLabel = card.dueDate
@@ -77,9 +104,13 @@ function BoardCardInner({ cardId }: BoardCardProps) {
     <>
       <button
         type="button"
+        draggable
         onClick={openModal}
-        className="group w-full rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        className="group w-full rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 cursor-grab active:cursor-grabbing"
         aria-label={`Open card: ${card.title}`}
+        data-card-id={cardId}
       >
         <h3 className="font-medium text-slate-900 line-clamp-2">{card.title}</h3>
         {card.description && (
@@ -223,6 +254,7 @@ function BoardCardInner({ cardId }: BoardCardProps) {
                   </p>
                 </div>
               )}
+              <CardComments cardId={cardId} />
               <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4">
                 <Button onClick={() => setIsEditing(true)} aria-label="Edit card">
                   Edit

@@ -1,4 +1,4 @@
-import { memo, useState, useCallback } from "react"
+import { memo, useState, useCallback, useRef } from "react"
 import { useShallow } from "zustand/react/shallow"
 import type { WorkspaceStore } from "../../store"
 import { useWorkspaceStore, selectCardsForColumn } from "../../store"
@@ -19,6 +19,7 @@ function BoardColumnInner({ columnId }: BoardColumnProps) {
   const updateColumn = useWorkspaceStore((s: WorkspaceStore) => s.updateColumn)
   const deleteColumn = useWorkspaceStore((s: WorkspaceStore) => s.deleteColumn)
   const createCard = useWorkspaceStore((s: WorkspaceStore) => s.createCard)
+  const moveCard = useWorkspaceStore((s: WorkspaceStore) => s.moveCard)
 
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editTitle, setEditTitle] = useState(column?.title ?? "")
@@ -29,6 +30,11 @@ function BoardColumnInner({ columnId }: BoardColumnProps) {
   const [createTagInput, setCreateTagInput] = useState("")
   const [createDueDate, setCreateDueDate] = useState("")
   const [deleteConfirm, setDeleteConfirm] = useState(false)
+
+  // Drag & Drop state
+  const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const cardListRef = useRef<HTMLDivElement>(null)
 
   const handleSaveTitle = useCallback(() => {
     const t = editTitle.trim()
@@ -80,6 +86,66 @@ function BoardColumnInner({ columnId }: BoardColumnProps) {
     deleteColumn(columnId)
     setDeleteConfirm(false)
   }, [columnId, deleteColumn])
+
+  /* ─── Drag & Drop handlers ─── */
+
+  /**
+   * Computes which gap the cursor is closest to.
+   * Returns an index from 0 (before first card) to cards.length (after last card).
+   */
+  const computeDropIndex = useCallback(
+    (clientY: number): number => {
+      if (!cardListRef.current) return cards.length
+
+      const cardElements = cardListRef.current.querySelectorAll<HTMLElement>("[data-card-id]")
+      if (cardElements.length === 0) return 0
+
+      for (let i = 0; i < cardElements.length; i++) {
+        const rect = cardElements[i].getBoundingClientRect()
+        const midY = rect.top + rect.height / 2
+        if (clientY < midY) return i
+      }
+
+      return cardElements.length
+    },
+    [cards.length]
+  )
+
+  const handleDragOver = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = "move"
+      setIsDragOver(true)
+      setDropIndicatorIndex(computeDropIndex(e.clientY))
+    },
+    [computeDropIndex]
+  )
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    // Only clear if we've truly left the column (not just entered a child)
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDropIndicatorIndex(null)
+      setIsDragOver(false)
+    }
+  }, [])
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault()
+      setDropIndicatorIndex(null)
+      setIsDragOver(false)
+
+      try {
+        const data = JSON.parse(e.dataTransfer.getData("text/plain"))
+        const { cardId } = data as { cardId: string; columnId: string }
+        const dropIndex = computeDropIndex(e.clientY)
+        moveCard(cardId, columnId, dropIndex)
+      } catch {
+        // Invalid drag data — ignore
+      }
+    },
+    [columnId, computeDropIndex, moveCard]
+  )
 
   if (!column) return null
 
@@ -143,10 +209,32 @@ function BoardColumnInner({ columnId }: BoardColumnProps) {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-3 min-h-[120px]">
-        {cards.map((card: Card) => (
-          <BoardCard key={card.id} cardId={card.id} />
+      <div
+        ref={cardListRef}
+        className={`flex flex-1 flex-col gap-2 overflow-y-auto p-3 min-h-[120px] transition-colors ${isDragOver ? "bg-blue-50/50" : ""}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {cards.map((card: Card, i: number) => (
+          <div key={card.id}>
+            {dropIndicatorIndex === i && (
+              <div className="drop-indicator" />
+            )}
+            <BoardCard cardId={card.id} />
+          </div>
         ))}
+        {/* Indicator after the last card */}
+        {dropIndicatorIndex === cards.length && (
+          <div className="drop-indicator" />
+        )}
+
+        {/* Empty state message when dragging over an empty column */}
+        {cards.length === 0 && isDragOver && (
+          <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-blue-300 py-6 text-sm text-blue-400">
+            Drop here
+          </div>
+        )}
 
         <button
           type="button"

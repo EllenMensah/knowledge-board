@@ -1,9 +1,12 @@
-<<<<<<< HEAD
-# Collaborative Knowledge Board — Stage 1
+# Collaborative Knowledge Board
 
-Production-grade collaborative workspace: boards, columns, and cards with normalized state, accessibility, and performance considerations.
+Production-grade collaborative workspace: boards, columns, and cards with normalized state, WebSocket sync, threaded comments, command-history undo/redo for cards, accessibility, and performance considerations.
 
-**Stack:** React 19, Vite, TypeScript, Tailwind CSS. No UI libraries; no drag-and-drop in Stage 1.
+**Stack:** React 19, Vite, TypeScript, Tailwind CSS. Drag-and-drop for cards between columns.
+
+**Collaboration / undo / comments:** See [docs/COLLABORATION.md](docs/COLLABORATION.md).
+
+**Real-time server:** In a second terminal run `npm run ws` (requires Node). The Vite app connects to `ws://localhost:4000` on load.
 
 ---
 
@@ -61,10 +64,12 @@ src/
 │  boards:   { byId: Record<id, Board>,   allIds: id[] }           │
 │  columns:  { byId: Record<id, Column>,  allIds: id[] }           │
 │  cards:    { byId: Record<id, Card>,    allIds: id[] }           │
+│  comments: { byId: Record<id, Comment>, allIds: id[] }             │
 ├─────────────────────────────────────────────────────────────────┤
 │  Board    → id, title, description, createdAt                    │
 │  Column   → id, boardId, title, order                            │
-│  Card     → id, columnId, title, description, tags[], dueDate     │
+│  Card     → id, columnId, title, description, tags[], dueDate   │
+│  Comment  → id, cardId, parentId, author, text, deleted          │
 └─────────────────────────────────────────────────────────────────┘
          │
          │  selectors (no prop drilling)
@@ -129,7 +134,8 @@ src/
 
 ```bash
 npm install
-npm run dev    # dev server
+npm run ws     # WebSocket server (terminal 1)
+npm run dev    # Vite dev server (terminal 2)
 npm run build  # production build
 npm run preview  # preview production build
 ```
@@ -145,7 +151,3 @@ npm run preview  # preview production build
 - [x] Memoization and code splitting (lazy Board page)  
 - [x] Semantic HTML, aria-labels, keyboard modal, focus management  
 - [x] Clean layout and spacing (Tailwind, no template-style UI)
-=======
-# knowledge-board
-A modern knowledge and task management board built with React, TypeScript, Zustand, and Tailwind CSS. It allows users to organize ideas, tasks, and notes in a clean interface. This is a Talenvo stage 1 project.
->>>>>>> 2ef3c30fc8c0dee990790f272827e3a55a54884f

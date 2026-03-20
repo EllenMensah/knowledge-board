@@ -6,13 +6,14 @@ type InputProps = {
   placeholder?: string
   value?: string
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
   className?: string
   "aria-label"?: string
   autoFocus?: boolean
 }
 
-const Input = ({ id, type = "text", placeholder, value, onChange, onKeyDown, className = "", "aria-label": ariaLabel, autoFocus }: InputProps) => {
+const Input = ({ id, type = "text", placeholder, value, onChange, onBlur, onKeyDown, className = "", "aria-label": ariaLabel, autoFocus }: InputProps) => {
   return (
     <input
       id={id}
@@ -22,6 +23,7 @@ const Input = ({ id, type = "text", placeholder, value, onChange, onKeyDown, cla
       placeholder={placeholder}
       value={value}
       onChange={onChange}
+      onBlur={onBlur}
       onKeyDown={onKeyDown}
       aria-label={ariaLabel}
     />

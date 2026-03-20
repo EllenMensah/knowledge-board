@@ -26,3 +26,23 @@ body {
 .markdown-content strong { font-weight: 600; }
 .markdown-content a { color: #2563eb; text-decoration: underline; }
 .markdown-content blockquote { border-left: 4px solid #cbd5e1; padding-left: 0.75rem; margin: 0.5em 0; color: #64748b; }
+
+/* Drag & Drop */
+.dragging {
+  opacity: 0.4;
+  transform: scale(0.97);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.drop-indicator {
+  height: 3px;
+  background: #3b82f6;
+  border-radius: 2px;
+  margin: 2px 0;
+  animation: indicator-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes indicator-pulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
